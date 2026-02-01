@@ -1,18 +1,25 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import Link from "next/link";
+"use client";
 
-export default async function DashboardPage() {
-  const session = await getServerSession(authOptions);
+import { signOut } from "next-auth/react";
+
+export default function DashboardPage() {
+  const handleLogout = async () => {
+    const confirmed = window.confirm("Do you really want to sign out?");
+    if (!confirmed) return;
+
+    await signOut({ callbackUrl: "/login" });
+  };
 
   return (
-    <main style={{ padding: 24 }}>
-      <h1 style={{ fontSize: 24, fontWeight: 700 }}>Dashboard</h1>
-      <p style={{ opacity: 0.8 }}>Logged in as: {session?.user?.email}</p>
+    <main className="p-6 space-y-4">
+      <h1 className="text-xl font-semibold">Dashboard</h1>
 
-      <div style={{ marginTop: 16 }}>
-        <Link href="/api/auth/signout">Logout</Link>
-      </div>
+      <button
+        onClick={handleLogout}
+        className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
+      >
+        Logout
+      </button>
     </main>
   );
 }
