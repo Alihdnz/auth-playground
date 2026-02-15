@@ -1,11 +1,31 @@
-import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
-export default withAuth({
-  pages: {
-    signIn: "/login",
-  },
-});
+export async function middleware(req: NextRequest){
+  const token = await getToken({
+    req,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  const pathname = req.nextUrl.pathname;
+
+
+  // protege o dashboard e admin: precisa login
+  if (!token){
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("callbackUrl", pathname);
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // protege /admin: precisa ADMIN
+  if (pathname.startsWith("/admin") && token.role !== "ADMIN"){
+    return NextResponse.redirect(new URL("/forbidden", req.url));
+  }
+
+  return NextResponse.next();
+}
 
 export const config = {
-  matcher: ["/dashboard/:path*"],
+  matcher: ["/dashboard/:path*", "/admin/:path*"],
 };
